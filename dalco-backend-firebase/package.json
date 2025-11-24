@@ -1,0 +1,43 @@
+{
+  "name": "dalco-backend-firebase",
+  "version": "1.0.0",
+  "description": "DalCo Data-Link Co-pilot - AI-powered SME automation with Firebase",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "echo \"Tests coming soon\" && exit 0",
+    "lint": "eslint .",
+    "deploy": "firebase deploy"
+  },
+  "keywords": [
+    "ai",
+    "chatbot",
+    "sme",
+    "automation",
+    "firebase",
+    "jamai",
+    "whatsapp",
+    "malaysia"
+  ],
+  "author": "Script Diddies",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "firebase": "^12.6.0",
+    "firebase-admin": "^13.6.0",
+    "googleapis": "^166.0.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.18.3",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
