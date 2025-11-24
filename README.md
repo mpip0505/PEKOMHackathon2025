@@ -1,6 +1,6 @@
-# 🚀 DalCo - Data-Link Co-pilot
+# 🔥 DalCo - Data-Link Co-pilot (Firebase Edition)
 
-AI-powered chatbot to automate data entry from customer messages (WhatsApp, Instagram, Email) directly into Google Sheets.
+AI-powered chatbot to automate data entry from customer messages directly into Google Sheets.
 
 **Reduces admin work from 16 hours/week to just 30 minutes!**
 
@@ -8,69 +8,68 @@ AI-powered chatbot to automate data entry from customer messages (WhatsApp, Inst
 
 ## 🎯 What is DalCo?
 
-DalCo helps Malaysian SMEs, Clinics, Schools, and Local Government automate repetitive tasks:
-- ✅ Auto-process messages from WhatsApp, Instagram, Email
+DalCo helps Malaysian SMEs automate repetitive tasks:
+- ✅ Auto-process WhatsApp, Instagram, Email messages
 - ✅ Extract customer data using AI (JamAI Base)
 - ✅ Auto-fill Google Sheets
 - ✅ Bilingual support (Bahasa Malaysia & English)
-- ✅ Built-in CRM for leads and bookings
+- ✅ Real-time updates with Firebase
 
 ---
 
 ## 🛠 Tech Stack
 
 - **Backend:** Node.js + Express.js
-- **Database:** 
-- **Auth:** Google OAuth 2.0
-- **AI:** JamAI Base (RAG + Multi-step reasoning)
-- **Documentation:** Swagger/OpenAPI
-
----
-
-## 📋 Prerequisites
-
-You need:
-- Node.js 18+ ([Download](https://nodejs.org/))
-- 
-- Google Cloud account ([Console](https://console.cloud.google.com/))
-- JamAI Base account ([Sign up](https://jamaibase.com/))
+- **Database:** Firebase Firestore
+- **Auth:** Firebase Authentication
+- **Storage:** Firebase Storage
+- **AI:** JamAI Base
+- **Hosting:** Firebase Hosting + Cloud Functions
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Clone and Install
+### 1. Install Dependencies
 
 ```bash
-git clone https://github.com/your-team/dalco-backend.git
-cd dalco-backend
 npm install
 ```
 
-### 2. Setup Environment
+### 2. Setup Firebase
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Create project: "dalco-hackathon"
+3. Enable Firestore Database (test mode)
+4. Enable Authentication (Google provider)
+5. Download service account key:
+   - Project Settings → Service Accounts
+   - Generate New Private Key
+   - Save as `dalco-hackathon-firebase-adminsdk.json` in project root
+
+### 3. Configure Environment
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and add your credentials:
+Edit `.env`:
 
 ```bash
-# Database
-MONGODB_URI=your-mongodb-connection-string
+NODE_ENV=development
+PORT=5000
 
-# Google OAuth (from Google Cloud Console)
-GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=GOCSPX-xxxxx
+# Path to your Firebase service account key
+FIREBASE_SERVICE_ACCOUNT_PATH=./dalco-hackathon-firebase-adminsdk.json
 
 # JamAI Base
-JAMAI_API_KEY=jamai_xxxxxxxx
+JAMAI_API_KEY=your-jamai-key
 
-# Generate this: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-JWT_SECRET=your-generated-secret
+# Frontend
+FRONTEND_URL=http://localhost:3000
 ```
 
-### 3. Run the Server
+### 4. Run the Server
 
 ```bash
 npm run dev
@@ -78,165 +77,263 @@ npm run dev
 
 Visit:
 - **API:** http://localhost:5000
-- **Swagger Docs:** http://localhost:5000/api/docs
-
----
-
-## 🔑 Getting API Keys
-
-### Google OAuth Setup (5 minutes)
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create new project: "DalCo-Hackathon"
-3. Enable **Google+ API**
-4. Create **OAuth 2.0 Client ID**:
-   - Type: Web application
-   - Redirect URI: `http://localhost:5000/api/auth/google/callback`
-5. Copy Client ID and Secret to `.env`
-
-### MongoDB Setup (5 minutes)
-
-1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-2. Create free M0 cluster (choose Singapore region)
-3. Create database user
-4. Allow access from anywhere: `0.0.0.0/0`
-5. Get connection string and add to `.env`
-
-### JamAI Base Setup (2 minutes)
-
-1. Sign up at [JamAI Base](https://jamaibase.com/)
-2. Create new project
-3. Get API key from Settings
-4. Add to `.env`
+- **Health Check:** http://localhost:5000/api/health
+- **Docs:** http://localhost:5000/api/docs
 
 ---
 
 ## 📁 Project Structure
 
 ```
-dalco-backend/
+dalco-backend-firebase/
 ├── src/
-│   ├── config/         # Database, Passport, JamAI config
-│   ├── models/         # MongoDB schemas
-│   ├── routes/         # API endpoints
-│   ├── controllers/    # Request handlers
-│   ├── services/       # Business logic (JamAI, Sheets, Channels)
-│   ├── middleware/     # Auth, validation, errors
-│   ├── utils/          # Logger, helpers
-│   └── server.js       # Main entry point
+│   ├── config/
+│   │   └── firebase.js          # Firebase initialization
+│   ├── routes/
+│   │   ├── auth.routes.js       # Authentication
+│   │   ├── messages.routes.js   # Message processing
+│   │   ├── leads.routes.js      # Lead management
+│   │   └── analytics.routes.js  # Dashboard stats
+│   ├── controllers/             # Request handlers
+│   ├── services/                # Business logic
+│   ├── middleware/              # Auth, validation
+│   ├── utils/
+│   │   └── logger.js           # Winston logger
+│   └── server.js               # Main entry point
 ├── docs/
-│   └── swagger.yaml    # API documentation
-├── tests/              # Unit & integration tests
-├── .env.example        # Environment template
-├── .env                # Your config (git ignored)
-└── package.json        # Dependencies
+│   └── swagger.yaml            # API documentation
+├── dalco-hackathon-firebase-adminsdk.json  # KEEP SECRET!
+├── .env                        # Your config
+├── .gitignore
+├── package.json
+└── README.md
 ```
 
 ---
 
-## 📖 API Documentation
+## 🔥 Firebase Collections Structure
 
-**Swagger UI:** http://localhost:5000/api/docs
+### users
+```javascript
+{
+  uid: "firebase-user-id",
+  email: "user@example.com",
+  displayName: "Ahmad Ibrahim",
+  photoURL: "https://...",
+  organizationId: "org_123",
+  role: "owner",
+  languagePreference: "bm",
+  createdAt: Timestamp,
+  lastLogin: Timestamp
+}
+```
 
-### Main Endpoints
+### organizations
+```javascript
+{
+  id: "org_123",
+  name: "Klinik Sehat",
+  industry: "Healthcare",
+  ownerId: "user_id",
+  settings: {
+    timezone: "Asia/Kuala_Lumpur",
+    businessHours: {...}
+  },
+  createdAt: Timestamp
+}
+```
 
-| Category | Endpoint | Description |
-|----------|----------|-------------|
-| **Auth** | `GET /api/auth/google` | Login with Google |
-| **Auth** | `GET /api/auth/me` | Get current user |
-| **Messages** | `GET /api/messages` | List all messages |
-| **Messages** | `POST /api/messages/send` | Send message |
-| **JamAI** | `POST /api/jamai/chat/generate` | Generate AI response |
-| **JamAI** | `POST /api/jamai/knowledge/search` | Search knowledge base |
-| **Sheets** | `POST /api/sheets/write` | Write to Google Sheets |
-| **Leads** | `GET /api/leads` | List leads |
-| **Analytics** | `GET /api/analytics/overview` | Get dashboard stats |
+### messages
+```javascript
+{
+  id: "msg_123",
+  organizationId: "org_123",
+  channelType: "whatsapp",
+  channelId: "channel_123",
+  direction: "inbound",
+  from: "+60123456789",
+  content: "Saya nak buat appointment",
+  parsedData: {
+    intent: "booking",
+    entities: {...},
+    language: "bm"
+  },
+  status: "processed",
+  timestamp: Timestamp
+}
+```
 
-**Total:** 105 endpoints across 12 categories
+### leads
+```javascript
+{
+  id: "lead_123",
+  organizationId: "org_123",
+  sourceMessageId: "msg_123",
+  customerName: "Siti Aminah",
+  phone: "+60123456789",
+  email: "siti@example.com",
+  status: "new",
+  score: 85,
+  createdAt: Timestamp
+}
+```
+
+---
+
+## 🔐 Firebase Authentication
+
+### Login with Firebase Auth
+
+```javascript
+// Client-side (Frontend)
+import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+
+const auth = getAuth();
+const provider = new GoogleAuthProvider();
+
+signInWithPopup(auth, provider)
+  .then((result) => {
+    const user = result.user;
+    const idToken = await user.getIdToken();
+    
+    // Send idToken to your backend
+    fetch('http://localhost:5000/api/auth/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken })
+    });
+  });
+```
+
+### Verify Token on Backend
+
+```javascript
+// Server-side (Backend)
+const { auth } = require('./config/firebase');
+
+const verifyToken = async (idToken) => {
+  const decodedToken = await auth.verifyIdToken(idToken);
+  return decodedToken; // Contains uid, email, etc.
+};
+```
+
+---
+
+## 📖 API Endpoints
+
+### Authentication
+- `POST /api/auth/verify` - Verify Firebase ID token
+- `GET /api/auth/me` - Get current user
+- `POST /api/auth/logout` - Logout
+
+### Messages
+- `GET /api/messages` - List messages
+- `POST /api/messages/process` - Process new message
+- `GET /api/messages/:id` - Get message details
+
+### Leads
+- `GET /api/leads` - List leads
+- `POST /api/leads` - Create lead
+- `PUT /api/leads/:id` - Update lead
+
+### Analytics
+- `GET /api/analytics/overview` - Dashboard stats
 
 ---
 
 ## 🧪 Testing
 
-### Run Tests
+### Test Firebase Connection
 
 ```bash
-npm test
-```
-
-### Test with cURL
-
-```bash
-# Health check
 curl http://localhost:5000/api/health
-
-# Login (opens Google OAuth in browser)
-open http://localhost:5000/api/auth/google
-
-# Get user info (after login)
-curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-     http://localhost:5000/api/auth/me
 ```
 
-### Import Postman Collection
-
-1. File available in `docs/postman_collection.json`
-2. Import to Postman
-3. Set `BASE_URL` variable to `http://localhost:5000`
-
----
-
-## 👥 Team Workflow (4 Days, 5 People)
-
-### Day 1: Foundation
-- **Person 1:** Auth + User models
-- **Person 2:** JamAI integration
-- **Person 3:** WhatsApp webhook
-- **Person 4:** Frontend login page
-- **Person 5:** Testing + docs
-
-### Day 2: Core Features
-- Message processing pipeline
-- Google Sheets integration
-- Lead management
-- Dashboard UI
-
-### Day 3: Multi-channel
-- Instagram + Email channels
-- FAQ management
-- Analytics
-- Bilingual support (BM/EN)
-
-### Day 4: Polish
-- Bug fixes
-- Demo preparation
-- Presentation
+Expected response:
+```json
+{
+  "success": true,
+  "status": "healthy",
+  "services": {
+    "api": "running",
+    "firestore": "connected"
+  }
+}
+```
 
 ---
 
 ## 🐛 Troubleshooting
 
-### MongoDB Connection Failed
-```bash
-# Check connection string format
-mongodb+srv://username:password@cluster.mongodb.net/dbname
+### Error: "Firebase service account not found"
 
-# Check IP whitelist in MongoDB Atlas
+```bash
+# Make sure the file exists
+ls -la dalco-hackathon-firebase-adminsdk.json
+
+# Check .env path is correct
+FIREBASE_SERVICE_ACCOUNT_PATH=./dalco-hackathon-firebase-adminsdk.json
 ```
 
-### Google OAuth Error
-```bash
-# Verify redirect URI matches exactly in Google Console:
-http://localhost:5000/api/auth/google/callback
+### Error: "Permission denied"
+
+In Firebase Console:
+1. Firestore → Rules
+2. Change to test mode:
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;  // For hackathon only!
+    }
+  }
+}
 ```
 
-### Port Already in Use
+### Error: "Port 5000 already in use"
+
 ```bash
-# Kill process on port 5000
+# Kill the process
 npx kill-port 5000
 
-# Or change port in .env
-PORT=5001
+# Or change port
+PORT=5001 npm run dev
+```
+
+---
+
+## 🚢 Deployment (Firebase Hosting)
+
+### 1. Install Firebase CLI
+
+```bash
+npm install -g firebase-tools
+firebase login
+```
+
+### 2. Initialize Firebase
+
+```bash
+firebase init
+
+# Select:
+# - Hosting
+# - Functions (for backend)
+# - Firestore
+```
+
+### 3. Deploy
+
+```bash
+# Deploy everything
+firebase deploy
+
+# Deploy functions only
+firebase deploy --only functions
+
+# Deploy hosting only
+firebase deploy --only hosting
 ```
 
 ---
@@ -244,95 +341,49 @@ PORT=5001
 ## 📚 Useful Commands
 
 ```bash
-# Development (auto-restart)
+# Development
 npm run dev
 
 # Production
 npm start
 
-# Run tests
-npm test
+# Deploy to Firebase
+npm run deploy
 
-# Lint code
-npm run lint
-
-# Generate JWT secret
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# View logs
+firebase functions:log
 ```
 
 ---
 
-## 🌟 Key Features Demo
+## 🌟 Firebase Advantages
 
-### 1. Auto Message Processing
-```
-Customer: "Saya nak buat appointment Jumaat 2pm"
-         ↓
-DalCo AI: Extracts → Name, Date (Friday), Time (2pm)
-         ↓
-Google Sheets: Auto-filled in row 47
-         ↓
-Customer: Gets instant confirmation reply
-```
-
-### 2. Time Saved
-- **Before:** 16 hours/week manual entry
-- **After:** 30 minutes/week review only
-- **Saved:** 15.5 hours = RM 500-1000/week
-
-### 3. Accuracy Improvement
-- **Before:** 96-99% (human error)
-- **After:** 99.999% (AI precision)
+| Feature | Benefit |
+|---------|---------|
+| **Real-time** | Instant updates across all clients |
+| **Scalability** | Auto-scales with usage |
+| **Security** | Built-in security rules |
+| **Authentication** | Google, Email, Phone built-in |
+| **Offline** | Works offline, syncs when online |
+| **Free Tier** | 1GB storage, 10GB bandwidth/month |
 
 ---
 
-## 🚢 Deployment
+## 🔗 Resources
 
-### Deploy to Render (Free)
-
-1. Push code to GitHub
-2. Go to [Render](https://render.com/)
-3. New Web Service → Connect GitHub
-4. Add environment variables
-5. Deploy!
-
-### Deploy to Railway (Free)
-
-1. Go to [Railway](https://railway.app/)
-2. New Project → Deploy from GitHub
-3. Add environment variables
-4. Deploy!
-
-**Remember to update:**
-- `GOOGLE_CALLBACK_URL` to your production URL
-- `FRONTEND_URL` to your frontend URL
-- MongoDB IP whitelist if needed
-
----
-
-## 📄 License
-
-MIT License - See [LICENSE](LICENSE) file
-
----
-
-## 🙏 Acknowledgments
-
-Built for **[Hackathon Name]** by Team DalCo
-
-- **JamAI Base** - AI Platform
-- **Google Cloud** - OAuth & Sheets
-- **MongoDB Atlas** - Database
-- **Malaysian SME Community** - Inspiration
+- **Firebase Console:** https://console.firebase.google.com/
+- **Firebase Docs:** https://firebase.google.com/docs
+- **Firestore Guide:** https://firebase.google.com/docs/firestore
+- **JamAI Base:** https://jamaibase.com/
 
 ---
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/your-team/dalco-backend/issues)
-- **Documentation:** http://localhost:5000/api/docs
+- **Issues:** Create GitHub issue
+- **Docs:** http://localhost:5000/api/docs
 - **Team Contact:** your-email@example.com
 
 ---
 
-**Built with ❤️ for Malaysian SMEs**
+**Built with ❤️ and 🔥 Firebase for Malaysian SMEs**
