@@ -11,6 +11,7 @@ package-lock.json
 *firebase-adminsdk*.json
 serviceAccountKey.json
 credentials/
+dalco-hackathon-firebase-adminsdk.json
 
 # Logs
 logs/

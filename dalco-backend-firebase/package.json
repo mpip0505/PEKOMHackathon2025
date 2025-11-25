@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "smoke": "node scripts/health-check.js",
     "test": "echo \"Tests coming soon\" && exit 0",
     "lint": "eslint .",
     "deploy": "firebase deploy"

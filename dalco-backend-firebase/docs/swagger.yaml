@@ -1,0 +1,20 @@
+openapi: 3.0.0
+info:
+  title: DalCo API (stub)
+  version: '1.0.0'
+  description: Minimal API spec so Swagger UI can render during demos.
+paths:
+  /api/system/status:
+    get:
+      summary: System status report
+      parameters:
+        - in: query
+          name: deep
+          schema:
+            type: string
+            enum: ['true','false']
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json: {}

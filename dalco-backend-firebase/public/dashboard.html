@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DalCo SME Dashboard</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f5f7fb;
+        margin: 0;
+        padding: 32px;
+        color: #1f2933;
+      }
+      h1 {
+        margin-bottom: 0.2rem;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px;
+        margin: 24px 0;
+      }
+      .card {
+        background: #fff;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+      }
+      button {
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 18px;
+        font-size: 15px;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .insights {
+        margin-top: 16px;
+        padding: 16px;
+        background: #eef2ff;
+        border-radius: 12px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 12px;
+      }
+      th {
+        background: #f8fafc;
+      }
+      tr:nth-child(even) {
+        background: #f9fafb;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>DalCo Retail Cockpit</h1>
+      <p>Live orders synced from Google Sheets + JamAI Base insight button.</p>
+    </header>
+
+    <section class="cards">
+      <div class="card">
+        <h3>Total Orders</h3>
+        <p id="totalOrders">-</p>
+      </div>
+      <div class="card">
+        <h3>Top Product</h3>
+        <p id="topProduct">-</p>
+      </div>
+      <div class="card">
+        <h3>Top Product Share</h3>
+        <p id="topProductShare">-</p>
+      </div>
+    </section>
+
+    <section>
+      <div style="display: flex; gap: 12px; align-items: center">
+        <h2 style="margin: 0">AI Analysis</h2>
+        <button id="analyzeBtn">Ask JamAI Base</button>
+      </div>
+      <div class="insights" id="insightsBox">
+        Press the button for instant recommendations.
+      </div>
+    </section>
+
+    <section>
+      <h2>Recent Orders</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Customer</th>
+            <th>Phone</th>
+            <th>Item</th>
+            <th>Quantity</th>
+          </tr>
+        </thead>
+        <tbody id="ordersTable">
+          <tr>
+            <td colspan="5">Loading...</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <script>
+      const overviewUrl = '/api/analytics/overview';
+      const insightsUrl = '/api/analytics/insights';
+
+      async function loadOverview() {
+        const res = await fetch(overviewUrl);
+        const payload = await res.json();
+        if (!payload.success) return;
+
+        document.getElementById('totalOrders').textContent = payload.data.totalOrders ?? 0;
+        document.getElementById('topProduct').textContent = payload.data.topProduct ?? '-';
+        document.getElementById('topProductShare').textContent = `${payload.data.topProductShare ?? 0}%`;
+
+        const ordersBody = document.getElementById('ordersTable');
+        ordersBody.innerHTML = '';
+        (payload.data.lastOrders || []).forEach((order) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${order.timestamp || '-'}</td>
+            <td>${order.customerName || '-'}</td>
+            <td>${order.phone || '-'}</td>
+            <td>${order.item || '-'}</td>
+            <td>${order.quantity || '-'}</td>
+          `;
+          ordersBody.appendChild(row);
+        });
+      }
+
+      async function askAI() {
+        const btn = document.getElementById('analyzeBtn');
+        const insightsBox = document.getElementById('insightsBox');
+        btn.disabled = true;
+        insightsBox.textContent = 'Analyzing sales data...';
+
+        try {
+          const res = await fetch(insightsUrl, { method: 'POST' });
+          const payload = await res.json();
+          insightsBox.textContent = payload.insights || 'No insight returned.';
+        } catch (error) {
+          insightsBox.textContent = 'Failed to fetch insight.';
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      document.getElementById('analyzeBtn').addEventListener('click', askAI);
+      loadOverview();
+    </script>
+  </body>
+</html>
+

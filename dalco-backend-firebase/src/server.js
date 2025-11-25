@@ -56,6 +56,12 @@ try {
   logger.warn('Swagger documentation not available');
 }
 
+const publicDir = path.join(__dirname, '../public');
+app.use('/dashboard', express.static(publicDir));
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(publicDir, 'dashboard.html'));
+});
+
 // ==================== ROUTES ====================
 const API_PREFIX = '/api';
 
@@ -103,11 +109,13 @@ app.get('/api/health', async (req, res) => {
 
 // Import routes (create these next)
 try {
+  const systemRoutes = require('./routes/system.routes');
   const authRoutes = require('./routes/auth.routes');
   const messageRoutes = require('./routes/messages.routes');
   const leadRoutes = require('./routes/leads.routes');
   const analyticsRoutes = require('./routes/analytics.routes');
 
+  app.use(`${API_PREFIX}/system`, systemRoutes);
   app.use(`${API_PREFIX}/auth`, authRoutes);
   app.use(`${API_PREFIX}/messages`, messageRoutes);
   app.use(`${API_PREFIX}/leads`, leadRoutes);
@@ -150,14 +158,14 @@ const server = app.listen(PORT, () => {
   logger.info(`
     ╔═══════════════════════════════════════════════════╗
     ║                                                   ║
-    ║   🔥 DalCo API Server Running (Firebase)         ║
+    ║    DalCo API Server Running (Firebase)            ║
     ║                                                   ║
-    ║   Environment: ${process.env.NODE_ENV?.toUpperCase() || 'DEVELOPMENT'}                          ║
+    ║   Environment: ${process.env.NODE_ENV?.toUpperCase() || 'DEVELOPMENT'}                        ║
     ║   Port: ${PORT}                                      ║
     ║   Database: Firebase Firestore                    ║
-    ║   API Docs: http://localhost:${PORT}/api/docs      ║
+    ║   API Docs: http://localhost:${PORT}/api/docs        ║
     ║                                                   ║
-    ║   Ready to reduce admin work! 💪                 ║
+    ║   Ready to reduce admin work!                     ║
     ║                                                   ║
     ╚═══════════════════════════════════════════════════╝
   `);
