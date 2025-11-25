@@ -1,6 +1,6 @@
-# 🔥 DalCo - Data-Link Co-pilot (Firebase Edition)
+# 🔥 DalCo - Data-Link Co-pilot (Firebase + JamAI Base Edition)
 
-AI-powered chatbot to automate data entry from customer messages directly into Google Sheets.
+AI-powered WhatsApp chatbot + internal co-pilot that automates order taking, FAQ responses, inventory checks, and dashboard insights for Malaysian SME wholesalers.
 
 **Reduces admin work from 16 hours/week to just 30 minutes!**
 
@@ -10,21 +10,37 @@ AI-powered chatbot to automate data entry from customer messages directly into G
 
 DalCo helps Malaysian SMEs automate repetitive tasks:
 - ✅ Auto-process WhatsApp, Instagram, Email messages
-- ✅ Extract customer data using AI (JamAI Base)
-- ✅ Auto-fill Google Sheets
-- ✅ Bilingual support (Bahasa Malaysia & English)
-- ✅ Real-time updates with Firebase
+- ✅ Extract customer data using AI (JamAI Base Action + Generative tables)
+- ✅ Answer FAQs + inventory queries with JamAI Knowledge tables (BM & English)
+- ✅ Auto-fill Google Sheets (orders + stock levels)
+- ✅ Provide SME dashboard with JamAI-powered insights
+- ✅ Real-time logs with Firebase
+
+---
+
+## 🧱 Architecture Overview
+
+| Layer | Tech | Purpose |
+|-------|------|---------|
+| Channel | WhatsApp Webhook (Express route) | Customer chatbot that can answer FAQs, check inventory, and capture orders |
+| AI Brain | JamAI Base (Action, Knowledge, Generative tables) | Intent detection, RAG for FAQ, order/inventory extraction, and analytics summaries |
+| Data | Google Sheets | `Inventory` tab (SKU, colour, size, stock) + `Orders` tab (timestamped orders) |
+| Automation | Firebase Functions-ready Express backend | Persists chat logs, exposes APIs, auto logs orders into Google Sheets |
+| Dashboard | `/dashboard` static UI | Shows total sales, top SKU, recent orders + “AI Analyse” button backed by JamAI Base |
+
+> 🗂️ Keep JamAI Base table IDs in `.env` so you can swap datasets between hackathon demos without touching code.
 
 ---
 
 ## 🛠 Tech Stack
 
 - **Backend:** Node.js + Express.js
-- **Database:** Firebase Firestore
+- **Realtime Store:** Firebase Firestore
 - **Auth:** Firebase Authentication
-- **Storage:** Firebase Storage
-- **AI:** JamAI Base
-- **Hosting:** Firebase Hosting + Cloud Functions
+- **AI Orchestration:** JamAI Base (Action, Knowledge, Generative tables)
+- **Sheets Automation:** Google Sheets API
+- **Frontend:** Lightweight dashboard (`/dashboard`) powered by Fetch + vanilla JS
+- **Hosting target:** Firebase Hosting + Cloud Functions
 
 ---
 
@@ -53,17 +69,30 @@ npm install
 cp .env.example .env
 ```
 
-Edit `.env`:
+Add the following variables:
 
 ```bash
 NODE_ENV=development
 PORT=5000
 
-# Path to your Firebase service account key
+# Firebase Admin
 FIREBASE_SERVICE_ACCOUNT_PATH=./dalco-hackathon-firebase-adminsdk.json
 
-# JamAI Base
+# JamAI Base (replace with your table IDs)
 JAMAI_API_KEY=your-jamai-key
+JAMAI_BASE_URL=https://api.jamaibase.com/v1
+JAMAI_INTENT_ACTION_TABLE_ID=tbl_intent
+JAMAI_FAQ_KNOWLEDGE_TABLE_ID=tbl_faq
+JAMAI_INVENTORY_ACTION_TABLE_ID=tbl_inventory_parser
+JAMAI_ORDER_ACTION_TABLE_ID=tbl_order_structurer
+JAMAI_ANALYTICS_GENERATIVE_TABLE_ID=tbl_sales_insights
+
+# Google Sheets (Service Account must have edit access)
+GOOGLE_SERVICE_ACCOUNT_EMAIL=service-account@project.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nabc...\n-----END PRIVATE KEY-----\n"
+GOOGLE_SHEETS_SPREADSHEET_ID=1xxxxxxxxxxxx
+GOOGLE_SHEETS_INVENTORY_RANGE=Inventory!A2:F
+GOOGLE_SHEETS_ORDER_RANGE=Orders!A2:G
 
 # Frontend
 FRONTEND_URL=http://localhost:3000
@@ -88,25 +117,27 @@ Visit:
 dalco-backend-firebase/
 ├── src/
 │   ├── config/
-│   │   └── firebase.js          # Firebase initialization
+│   │   └── firebase.js
+│   ├── controllers/
+│   │   ├── analytics.controller.js
+│   │   ├── auth.controller.js
+│   │   ├── leads.controller.js
+│   │   └── messages.controller.js
 │   ├── routes/
-│   │   ├── auth.routes.js       # Authentication
-│   │   ├── messages.routes.js   # Message processing
-│   │   ├── leads.routes.js      # Lead management
-│   │   └── analytics.routes.js  # Dashboard stats
-│   ├── controllers/             # Request handlers
-│   ├── services/                # Business logic
-│   ├── middleware/              # Auth, validation
+│   │   ├── analytics.routes.js
+│   │   ├── auth.routes.js
+│   │   ├── leads.routes.js
+│   │   └── messages.routes.js
+│   ├── services/
+│   │   ├── googleSheets.service.js  # Inventory + order log helper
+│   │   └── jamai.service.js         # JamAI Base wrappers
 │   ├── utils/
-│   │   └── logger.js           # Winston logger
-│   └── server.js               # Main entry point
-├── docs/
-│   └── swagger.yaml            # API documentation
-├── dalco-hackathon-firebase-adminsdk.json  # KEEP SECRET!
-├── .env                        # Your config
-├── .gitignore
-├── package.json
-└── README.md
+│   │   └── logger.js
+│   └── server.js
+├── public/
+│   └── dashboard.html               # SME owner dashboard UI
+└── docs/
+    └── swagger.yaml (optional)
 ```
 
 ---
@@ -143,23 +174,19 @@ dalco-backend-firebase/
 }
 ```
 
-### messages
+### messages (auto-logged from WhatsApp webhook)
 ```javascript
 {
-  id: "msg_123",
-  organizationId: "org_123",
-  channelType: "whatsapp",
-  channelId: "channel_123",
-  direction: "inbound",
+  channel: "whatsapp",
+  direction: "inbound" | "outbound",
   from: "+60123456789",
-  content: "Saya nak buat appointment",
-  parsedData: {
-    intent: "booking",
-    entities: {...},
-    language: "bm"
-  },
-  status: "processed",
-  timestamp: Timestamp
+  to: "+6012...",
+  content: "Ada stok tak untuk 50 helai t-shirt biru size L?",
+  intent: "inventory",
+  metadata: {...}, // includes JamAI parsed entities or Google Sheets results
+  locale: "ms",
+  status: "sent",
+  createdAt: Timestamp
 }
 ```
 
@@ -219,47 +246,41 @@ const verifyToken = async (idToken) => {
 
 ---
 
-## 📖 API Endpoints
+## 📖 API Endpoints (POC)
 
-### Authentication
-- `POST /api/auth/verify` - Verify Firebase ID token
-- `GET /api/auth/me` - Get current user
-- `POST /api/auth/logout` - Logout
-
-### Messages
-- `GET /api/messages` - List messages
-- `POST /api/messages/process` - Process new message
-- `GET /api/messages/:id` - Get message details
-
-### Leads
-- `GET /api/leads` - List leads
-- `POST /api/leads` - Create lead
-- `PUT /api/leads/:id` - Update lead
-
-### Analytics
-- `GET /api/analytics/overview` - Dashboard stats
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/auth/verify` | Verify Firebase ID token |
+| `POST /api/messages/whatsapp` | Mock WhatsApp webhook entry point |
+| `GET /api/leads` | Fetch latest structured leads (from Firestore logs) |
+| `POST /api/leads` | Manually register a lead |
+| `GET /api/analytics/overview` | Pulls Google Sheets metrics for dashboard |
+| `POST /api/analytics/insights` | Calls JamAI Base Generative table for trend summary |
+| `GET /api/system/status?deep=true` | Returns env/config report and (optional) live service checks |
+| `GET /dashboard` | Lightweight SME owner UI (uses above APIs) |
 
 ---
 
 ## 🧪 Testing
 
-### Test Firebase Connection
-
+### 1. Health check
 ```bash
 curl http://localhost:5000/api/health
 ```
 
-Expected response:
-```json
-{
-  "success": true,
-  "status": "healthy",
-  "services": {
-    "api": "running",
-    "firestore": "connected"
-  }
-}
+### 2. Simulate WhatsApp message
+```bash
+curl -X POST http://localhost:5000/api/messages/whatsapp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Hi, ada stok 50 blue tee L?",
+    "phoneNumber": "+60123456789",
+    "displayName": "Encik Ali"
+  }'
 ```
+
+### 3. Dashboard
+Visit `http://localhost:5000/dashboard` and click **Ask JamAI Base** to generate AI analysis of sheet data.
 
 ---
 
@@ -386,4 +407,4 @@ firebase functions:log
 
 ---
 
-**Built with ❤️ and 🔥 Firebase for Malaysian SMEs**
+**Built with ❤️ and 🔥 Firebase + JamAI Base for Malaysian SMEs**

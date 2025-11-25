@@ -1,3 +1,4 @@
+const path = require('path');
 const admin = require('firebase-admin');
 const logger = require('../utils/logger');
 
@@ -7,7 +8,10 @@ const initializeFirebase = () => {
   try {
     // Option 1: Using service account file (Development)
     if (process.env.FIREBASE_SERVICE_ACCOUNT_PATH) {
-      const serviceAccount = require(`../../${process.env.FIREBASE_SERVICE_ACCOUNT_PATH}`);
+      const resolvedPath = path.isAbsolute(process.env.FIREBASE_SERVICE_ACCOUNT_PATH)
+        ? process.env.FIREBASE_SERVICE_ACCOUNT_PATH
+        : path.resolve(process.cwd(), process.env.FIREBASE_SERVICE_ACCOUNT_PATH);
+      const serviceAccount = require(resolvedPath);
       
       firebaseApp = admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
